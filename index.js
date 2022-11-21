@@ -1,10 +1,5 @@
-const {
-  EmbedBuilder,
-  WebhookClient
-} = require('discord.js');
-const {
-  TwitterApi
-} = require('twitter-api-v2');
+const { EmbedBuilder, WebhookClient} = require('discord.js');
+const { TwitterApi } = require('twitter-api-v2');
 const fs = require('fs');
 const download = require('download');
 const webhookId = "";
@@ -12,14 +7,17 @@ const webhookToken = "";
 const watchdogId = "";
 const watchdogToken = "";
 const avatarImage = "";
+
 const webhookClient = new WebhookClient({
   id: webhookId,
   token: webhookToken
 });
+
 const watchdogClient = new WebhookClient({
   id: watchdogId,
   token: watchdogToken
 });
+
 global.lock = false;
 global.progImg = "";
 global.progNoAr = "";
@@ -36,6 +34,7 @@ function watchdogSend(string2send) {
     username: 'Watchdog Alerta Animu',
   });
 }
+
 console.log('ANIMU ALERT SYSTEM ACTIVE AND ON DUTY, FUCK EM UP');
 watchdogSend("ANIMU ALERT ACTIVE");
 
