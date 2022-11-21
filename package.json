@@ -1,0 +1,16 @@
+{
+  "name": "animu_alert",
+  "version": "0.0.1",
+  "description": "scripts para alertar os ouvintes sobre programas ao vivo",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "bossatossa",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.5.0",
+    "download": "^8.0.0",
+    "twitter-api-v2": "^1.12.7"
+  }
+}
