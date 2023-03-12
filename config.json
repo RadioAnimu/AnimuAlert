@@ -1,0 +1,16 @@
+{
+    "discord": {
+    "webhookId": "",
+    "webhookToken": "",
+    "watchdogId": "",
+    "watchdogToken": "",
+    "avatarUrl": ""
+    },
+
+    "twitter":{
+        "appKey": "",
+        "appSecret": "",
+        "accsessToken": "",
+        "accsessSecret": ""
+    }
+}
