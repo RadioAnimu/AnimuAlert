@@ -10,7 +10,7 @@
     "twitter":{
         "appKey": "",
         "appSecret": "",
-        "accsessToken": "",
-        "accsessSecret": ""
+        "accessToken": "",
+        "accessSecret": ""
     }
 }
