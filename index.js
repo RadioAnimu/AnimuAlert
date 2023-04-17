@@ -28,6 +28,7 @@ const client = new TwitterApi({
 });
 
 function watchdogSend(string2send) {
+  if(config.discord.enabled){
   try {
     watchdogClient.send({
       content: String(string2send),
@@ -35,6 +36,7 @@ function watchdogSend(string2send) {
     });
   } catch (error) {
     console.log(error);
+  }
   }
 }
 
@@ -77,7 +79,8 @@ try {
       if ((!lockCopa && (global.progNoAr == "Mundial 2022" || global.progNoAr == "Mundial 2022 Brasil")) || !global.lock) {
         console.log("A enviar alerta");
 
-
+// Twitter
+        if(config.twitter.enabled){
         fs.writeFileSync('foo.webp', await download(progImg));
         const mediaId = await client.v1.uploadMedia('./foo.webp');
         client.v2.tweet(desc + '\n Ouça em: https://www.animu.com.br/', { media: { media_ids: [mediaId] } }).then((val) => {
@@ -86,7 +89,12 @@ try {
         }).catch((err) => {
           console.log(err);
         });
+        }
 
+
+
+// Discord
+        if(config.discord.enabled){
         var embed = new EmbedBuilder()
           .setTitle("**AGORA [NO AR]** 🔴")
           .setColor(0x7de915)
@@ -103,6 +111,7 @@ try {
           avatarURL: config.discord.avatarUrl,
           embeds: [embed],
         });
+        }
 
         global.lock = true;
         globalThis.progAnterior = progNoAr;

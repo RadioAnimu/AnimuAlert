@@ -1,5 +1,6 @@
 {
     "discord": {
+    "enabled": true,
     "webhookId": "",
     "webhookToken": "",
     "watchdogId": "",
@@ -8,6 +9,7 @@
     },
 
     "twitter":{
+        "enabled" : true,
         "appKey": "",
         "appSecret": "",
         "accessToken": "",
