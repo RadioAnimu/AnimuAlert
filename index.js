@@ -44,12 +44,12 @@ console.log('ANIMU ALERT SYSTEM ACTIVE AND ON DUTY');
 watchdogSend("ANIMU ALERT ACTIVE");
 
 async function checkSend() {
-  var locutorJSON = "https://www.animu.com.br/teste/alert.php?time=" + Math.random();
+  let locutorJSON = "https://www.animu.com.br/teste/alert.php?time=" + Math.random();
   let response;
 try {
-  response = await  fetch(locutorJSON);
-  if (response.ok) {
-    let json = await response.json();
+  fetch(locutorJSON)
+  .then((response) => response.json())
+  .then(async (json) => {
     let desc;
 
     watchdogSend("PROG STATUS | Locutor:  " + json.locutor + ", Programa: " + json.programa);
@@ -90,8 +90,6 @@ try {
           console.log(err);
         });
         }
-
-
 
 // Discord
         if(config.discord.enabled){
@@ -138,6 +136,8 @@ try {
       }
     }
   }
+  )
+  .catch((error) => console.log('There was an error', error));
 } catch (error) {
   console.log('There was an error', error);
 }
