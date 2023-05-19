@@ -1,10 +1,18 @@
-//@ts-check
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const config = require("./config.json");
+import fetch from 'node-fetch';
 const { EmbedBuilder, WebhookClient } = require('discord.js');
 const { TwitterApi } = require('twitter-api-v2');
 const fs = require('fs');
 const download = require('download');
-const config = require("./config.json");
 
+globalThis.lock = false;
+globalThis.lockCopa = false;
+let progImg = "";
+let progNoAr = "";
+
+if(config.discord.enabled){
 const webhookClient = new WebhookClient({
   id: config.discord.webhookId,
   token: config.discord.webhookToken
@@ -15,64 +23,63 @@ const watchdogClient = new WebhookClient({
   token: config.discord.watchdogToken
 });
 
-globalThis.lock = false;
-globalThis.lockCopa = false;
-let progImg = "";
-let progNoAr = "";
 
+function watchdogSend(string) {
+  if(config.discord.enabled){
+  try {
+    watchdogClient.send({
+      content: String(string),
+      username: 'Watchdog Alerta Animu',
+    });
+  } catch (error) {
+    console.log('There was an error', error);
+  }
+  }
+}
+watchdogSend("ANIMU ALERT ACTIVE");
+}
+
+if(config.twitter.enabled){
 const client = new TwitterApi({
   appKey: config.twitter.appKey,
   appSecret: config.twitter.appSecret,
   accessToken: config.twitter.accessToken,
   accessSecret: config.twitter.accessSecret,
 });
-
-function watchdogSend(string2send) {
-  if(config.discord.enabled){
-  try {
-    watchdogClient.send({
-      content: String(string2send),
-      username: 'Watchdog Alerta Animu',
-    });
-  } catch (error) {
-    console.log(error);
-  }
-  }
 }
 
-console.log('ANIMU ALERT SYSTEM ACTIVE AND ON DUTY');
-watchdogSend("ANIMU ALERT ACTIVE");
+
+console.log('ANIMU ALERT SYSTEM ACTIVE');
 
 async function checkSend() {
-  let locutorJSON = "https://www.animu.com.br/teste/alert.php?time=" + Math.random();
-  let response;
-try {
-  fetch(locutorJSON)
-  .then((response) => response.json())
-  .then(async (json) => {
+  try {
+    let locutorJson = await fetch("https://www.animu.com.br/teste/alert.php?time=" + Math.random());
+    let resposta = await locutorJson.json();
     let desc;
+   
+    console.log("PROG STATUS | Locutor:  " + resposta.locutor + ", Programa: " + resposta.programa);
+    console.log("BLOCK STATUS | BLOCK ALERTA: " + global.lock + ", BLOCK MUNDIAL: " + global.lockCopa);
+    console.log("Programa Anterior: " + global.progAnterior);
 
-    watchdogSend("PROG STATUS | Locutor:  " + json.locutor + ", Programa: " + json.programa);
-    watchdogSend("BLOCK STATUS | BLOCK ALERTA: " + global.lock + ", BLOCK MUNDIAL: " + global.lockCopa);
-    watchdogSend("Programa Anterior: " + global.progAnterior);
-
-    if (json.programa != global.progAnterior && json.locutor == "Haruka Yuki") {
-      globalThis.progAnterior = json.programa;
+    if (resposta.programa != global.progAnterior && resposta.locutor == "Haruka Yuki") {
+      globalThis.progAnterior = resposta.programa;
     }
 
-    if (json.locutor != "Haruka Yuki" && json.programa != "Manutenção") {
-      console.log("Programa ao vivo detectado");
-      console.log("Programa: " + json.programa);
-      console.log("Locutor: " + json.locutor);
-      console.log("BLOCK ALERTA: " + global.lock);
-      console.log("BLOCK MUNDIAL: " + global.lockCopa);
-      progImg = json.social;
-      progNoAr = json.programa;
+    if (resposta.locutor != "Haruka Yuki" && resposta.programa != "Manutenção") {
+      if(config.discord.enabled){
+        watchdogSend("Programa ao vivo detectado");
+        watchdogSend("Programa: " + resposta.programa);
+        watchdogSend("Locutor: " + resposta.locutor);
+        watchdogSend("BLOCK ALERTA: " + global.lock);
+        watchdogSend("BLOCK MUNDIAL: " + global.lockCopa);
+    }
+      progImg = resposta.social;
+      progNoAr = resposta.programa;
 
-      if (json.descricao.length > 0) {
-        desc = json.descricao;
+      if (resposta.descricao.length > 0) {
+        desc = resposta.descricao;
       } else {
-        desc = "Está a começar o " + json.programa + " com " + json.locutor;
+        desc = "Está a começar o " + resposta.programa + " com " + resposta.locutor;
       }
 
 
@@ -122,35 +129,33 @@ try {
 
       } else if ((global.progNoAr == "Mundial 2022" || global.progNoAr == "Mundial 2022 Brasil") && global.lockCopa) {
         watchdogSend("prog.desportiva detectada e bloqueada, deixando blocks na mesma");
-      } else if (json.locutor != "Haruka Yuki" && json.programa != global.progAnterior) {
+      } else if (resposta.locutor != "Haruka Yuki" && resposta.programa != global.progAnterior) {
         global.lock = false;
+        if(config.discord.enabled){
         watchdogSend("Outro programa ao vivo a entrar no ar, a desligar o block.");
-        console.log("Programa Anterior: " + global.progAnterior);
-        console.log("Programa: " + json.programa);
+        watchdogSend("Programa Anterior: " + global.progAnterior);
+        watchdogSend("Programa: " + resposta.programa);
+        }
       } else {
-        watchdogSend("Haru no comando, deixando tudo na mesma.");
-        console.log("Programa: " + json.programa);
-        console.log("Locutor: " + json.locutor);
-        console.log("BLOCK ALERTA: " + global.lock);
-        console.log("BLOCK MUNDIAL: " + global.lockCopa);
+        if(config.discord.enabled){
+          watchdogSend("Haru no comando, deixando tudo na mesma.");
+          watchdogSend("Programa: " + resposta.programa);
+          watchdogSend("Locutor: " + resposta.locutor);
+          watchdogSend("BLOCK ALERTA: " + global.lock);
+          watchdogSend("BLOCK MUNDIAL: " + global.lockCopa);
+      }
       }
     }
-  }
-  )
-  .catch((error) => console.log('There was an error', error));
-} catch (error) {
-  console.log('There was an error', error);
-}
-
-}
-
-setInterval(function () {
-  try {
-    checkSend();
+  
   } catch (error) {
-    console.log(error);
+    console.log(error)
   }
-}, 120000);
+
+}
 
 checkSend();
-setInterval(function () { watchdogSend("ANIMU ALERT HOURLY VIBE CHECK") }, 3600000);
+
+setInterval(function () {
+  checkSend();
+}, 240000 );
+
