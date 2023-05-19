@@ -1,6 +1,9 @@
 {
+    "endpoint_url" : "https://www.animu.com.br/teste/alert.php?time=",
+    "interval_minutes": 1,
+    
     "discord": {
-    "enabled": true,
+    "enabled": false,
     "webhookId": "",
     "webhookToken": "",
     "watchdogId": "",
@@ -9,7 +12,7 @@
     },
 
     "twitter":{
-        "enabled" : true,
+        "enabled" : false,
         "appKey": "",
         "appSecret": "",
         "accessToken": "",

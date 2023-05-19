@@ -1,6 +1,6 @@
 {
   "name": "animu_alert",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "scripts para alertar os ouvintes sobre programas ao vivo",
   "main": "index.js",
   "type": "module",
