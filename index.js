@@ -12,7 +12,7 @@ globalThis.lockCopa = false;
 let progImg = "";
 let progNoAr = "";
 
-if(config.discord.enabled){
+
 const webhookClient = new WebhookClient({
   id: config.discord.webhookId,
   token: config.discord.webhookToken
@@ -36,30 +36,30 @@ function watchdogSend(string) {
   }
   }
 }
-watchdogSend("ANIMU ALERT ACTIVE");
-}
 
-if(config.twitter.enabled){
+watchdogSend("ANIMU ALERT ACTIVE");
+
+
 const client = new TwitterApi({
   appKey: config.twitter.appKey,
   appSecret: config.twitter.appSecret,
   accessToken: config.twitter.accessToken,
   accessSecret: config.twitter.accessSecret,
 });
-}
+
 
 
 console.log('ANIMU ALERT SYSTEM ACTIVE');
 
 async function checkSend() {
   try {
-    let locutorJson = await fetch("https://www.animu.com.br/teste/alert.php?time=" + Math.random());
+    let locutorJson = await fetch(config.endpoint_url + Math.random());
     let resposta = await locutorJson.json();
     let desc;
    
-    console.log("PROG STATUS | Locutor:  " + resposta.locutor + ", Programa: " + resposta.programa);
-    console.log("BLOCK STATUS | BLOCK ALERTA: " + global.lock + ", BLOCK MUNDIAL: " + global.lockCopa);
-    console.log("Programa Anterior: " + global.progAnterior);
+    watchdogSend("PROG STATUS | Locutor:  " + resposta.locutor + ", Programa: " + resposta.programa);
+    watchdogSend("BLOCK STATUS | BLOCK ALERTA: " + global.lock + ", BLOCK MUNDIAL: " + global.lockCopa);
+    watchdogSend("Programa Anterior: " + global.progAnterior);
 
     if (resposta.programa != global.progAnterior && resposta.locutor == "Haruka Yuki") {
       globalThis.progAnterior = resposta.programa;
