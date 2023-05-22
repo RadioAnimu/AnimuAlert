@@ -35,7 +35,7 @@ function watchdogSend(string) {
     }
   }
 }
-watchdogSend("ANIMU ALERT ACTIVE");
+
 
 const client = new TwitterApi({
   appKey: config.twitter.appKey,
@@ -44,9 +44,11 @@ const client = new TwitterApi({
   accessSecret: config.twitter.accessSecret,
 });
 
-
-
-console.log('ANIMU ALERT SYSTEM ACTIVE');
+if (config.discord.enabled) {
+  watchdogSend("ANIMU ALERT ACTIVE");
+} else {
+  console.log('ANIMU ALERT SYSTEM ACTIVE');
+}
 
 async function checkSend() {
   try {
@@ -54,10 +56,15 @@ async function checkSend() {
     let resposta = await locutorJson.json();
     let desc;
 
-    watchdogSend(`PROG STATUS | Locutor:  ${resposta.locutor}, Programa: ${resposta.programa}`);
-    watchdogSend(`BLOCK STATUS | BLOCK ALERTA: ${global.lock}, BLOCK MUNDIAL: ${global.lockCopa}`);
-    watchdogSend(`Programa Anterior: ${global.progAnterior}`);
-
+    if (config.discord.enabled) {
+      watchdogSend(`PROG STATUS | Locutor:  ${resposta.locutor}, Programa: ${resposta.programa}`);
+      watchdogSend(`BLOCK STATUS | BLOCK ALERTA: ${global.lock}, BLOCK MUNDIAL: ${global.lockCopa}`);
+      watchdogSend(`Programa Anterior: ${global.progAnterior}`);
+    } else {
+      console.log(`PROG STATUS | Locutor:  ${resposta.locutor}, Programa: ${resposta.programa}`);
+      console.log(`BLOCK STATUS | BLOCK ALERTA: ${global.lock}, BLOCK MUNDIAL: ${global.lockCopa}`);
+      console.log(`Programa Anterior: ${global.progAnterior}`);
+    }
     if (resposta.programa != global.progAnterior && resposta.locutor == "Haruka Yuki") {
       globalThis.progAnterior = resposta.programa;
     }
@@ -69,6 +76,12 @@ async function checkSend() {
         watchdogSend(`Locutor: ${resposta.locutor}`);
         watchdogSend(`BLOCK ALERTA: ${global.lock}`);
         watchdogSend(`BLOCK MUNDIAL: ${global.lockCopa}`);
+      } else {
+        console.log("Programa ao vivo detectado");
+        console.log(`Programa: ${resposta.programa}`);
+        console.log(`Locutor: ${resposta.locutor}`);
+        console.log(`BLOCK ALERTA: ${global.lock}`);
+        console.log(`BLOCK MUNDIAL: ${global.lockCopa}`);
       }
       progImg = resposta.social;
       progNoAr = resposta.programa;
@@ -125,21 +138,31 @@ async function checkSend() {
         }
 
       } else if ((global.progNoAr == "Mundial 2022" || global.progNoAr == "Mundial 2022 Brasil") && global.lockCopa) {
-        watchdogSend("prog.desportiva detectada e bloqueada, deixando blocks na mesma");
+        watchdogSend("prog.desportiva detectada e bloqueada, deixando blocks na mesma")
       } else if (resposta.locutor != "Haruka Yuki" && resposta.programa != global.progAnterior) {
-        global.lock = false;
+        global.lock = false
         if (config.discord.enabled) {
-          watchdogSend("Outro programa ao vivo a entrar no ar, a desligar o block.");
-          watchdogSend("Programa Anterior: " + global.progAnterior);
-          watchdogSend("Programa: " + resposta.programa);
+          watchdogSend("Outro programa ao vivo a entrar no ar, a desligar o block.")
+          watchdogSend(`Programa Anterior: ${global.progAnterior}`)
+          watchdogSend(`Programa: ${resposta.programa}`)
+        } else {
+          console.log("Outro programa ao vivo a entrar no ar, a desligar o block.")
+          console.log(`Programa Anterior: ${global.progAnterior}`)
+          console.log(`Programa: ${resposta.programa}`)
         }
       } else {
         if (config.discord.enabled) {
-          watchdogSend("Haru no comando, deixando tudo na mesma.");
-          watchdogSend(`Programa: ${resposta.programa}`);
-          watchdogSend(`Locutor: ${resposta.locutor}`);
-          watchdogSend(`BLOCK ALERTA: ${global.lock}`);
-          watchdogSend(`BLOCK MUNDIAL: ${global.lockCopa}`);
+          watchdogSend("Haru no comando, deixando tudo na mesma.")
+          watchdogSend(`Programa: ${resposta.programa}`)
+          watchdogSend(`Locutor: ${resposta.locutor}`)
+          watchdogSend(`BLOCK ALERTA: ${global.lock}`)
+          watchdogSend(`BLOCK MUNDIAL: ${global.lockCopa}`)
+        } else {
+          console.log("Haru no comando, deixando tudo na mesma.")
+          console.log(`Programa: ${resposta.programa}`)
+          console.log(`Locutor: ${resposta.locutor}`)
+          console.log(`BLOCK ALERTA: ${global.lock}`)
+          console.log(`BLOCK MUNDIAL: ${global.lockCopa}`)
         }
       }
     }
@@ -153,6 +176,9 @@ async function checkSend() {
 checkSend();
 
 setInterval(function () {
-  checkSend();
-}, config.interval_minutes * 60000);
-
+  try {
+    checkSend()
+  } catch (error) {
+    console.log(error)
+  }
+}, config.interval_minutes * 60000)
