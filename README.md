@@ -1,2 +1,3 @@
 # AnimuAlert
-O script para avisar a malta
+Um script de node, utilizado para notificações de programas ao vivo.
+Envia para o discord e twitter.

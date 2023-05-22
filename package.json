@@ -1,8 +1,9 @@
 {
   "name": "animu_alert",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "scripts para alertar os ouvintes sobre programas ao vivo",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,6 +12,7 @@
   "dependencies": {
     "discord.js": "^14.5.0",
     "download": "^8.0.0",
+    "node-fetch": "^3.3.1",
     "twitter-api-v2": "^1.12.7"
   }
 }
