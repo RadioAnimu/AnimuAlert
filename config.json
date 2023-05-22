@@ -1,5 +1,5 @@
 {
-    "endpoint_url" : "https://www.animu.com.br/teste/alert.php?time=",
+    "endpoint_url" : "",
     "interval_minutes": 1,
     
     "discord": {
