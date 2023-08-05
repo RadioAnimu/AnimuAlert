@@ -1,6 +1,6 @@
 # AnimuAlert
-A node script used for notifying about live programs, sends to a Discord channel (via Webhooks, using the discord.js library)
-and Twitter (via the API, using the twitter-api-v2 library)
+
+A node script used for notifying about live programs, sends to a Discord channel (via Webhooks, using the discord.js library), Twitter (via the API, using the twitter-api-v2 library) and BlueSky (via the ATProtocol api library).
 
 The code is extremely focused on the radio api and its quirks but can be adapted for other uses if need be.
 
