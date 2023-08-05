@@ -1,41 +1,46 @@
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const config = require("./config.json");
-import fetch from 'node-fetch';
-const { EmbedBuilder, WebhookClient } = require('discord.js');
-const { TwitterApi } = require('twitter-api-v2');
-const fs = require('fs');
-const download = require('download');
+const { EmbedBuilder, WebhookClient } = require("discord.js");
+const { TwitterApi } = require("twitter-api-v2");
+import * as fs from "fs";
+import * as fss from "node:fs/promises";
+const download = require("download");
+import bluesky from "@atproto/api";
+const { BskyAgent, RichText } = bluesky;
 
-globalThis.lock = false;
-globalThis.lockCopa = false;
+globalThis.lock = true;
+globalThis.lockCopa = true;
+globalThis.lockUni = true;
+globalThis.lockFuk = false;
+
 let progImg = "";
 let progNoAr = "";
 
 const webhookClient = new WebhookClient({
   id: config.discord.webhookId,
-  token: config.discord.webhookToken
+  token: config.discord.webhookToken,
 });
 
 const watchdogClient = new WebhookClient({
   id: config.discord.watchdogId,
-  token: config.discord.watchdogToken
+  token: config.discord.watchdogToken,
 });
-
 
 function watchdogSend(string) {
   if (config.discord.enabled) {
     try {
       watchdogClient.send({
         content: String(string),
-        username: 'Watchdog Alerta Animu',
+        username: "Watchdog Alerta Animu",
       });
     } catch (error) {
-      console.log('There was an error', error);
+      console.log("There was an error", error);
     }
+  } else {
+    console.log(string);
   }
 }
-
 
 const client = new TwitterApi({
   appKey: config.twitter.appKey,
@@ -44,68 +49,87 @@ const client = new TwitterApi({
   accessSecret: config.twitter.accessSecret,
 });
 
-if (config.discord.enabled) {
-  watchdogSend("ANIMU ALERT ACTIVE");
-} else {
-  console.log('ANIMU ALERT SYSTEM ACTIVE');
-}
+const agent = new BskyAgent({
+  service: "https://bsky.social"
+});
+
+watchdogSend("ANIMU ALERT ACTIVE");
 
 async function checkSend() {
   try {
-    let locutorJson = await fetch(config.endpoint_url + Math.random());
+    let locutorJson = await fetch(config.endpoint_url + Math.random(), {
+      signal: AbortSignal.timeout(5000),
+    });
     let resposta = await locutorJson.json();
     let desc;
 
-    if (config.discord.enabled) {
-      watchdogSend(`PROG STATUS | Locutor:  ${resposta.locutor}, Programa: ${resposta.programa}`);
-      watchdogSend(`BLOCK STATUS | BLOCK ALERTA: ${global.lock}, BLOCK MUNDIAL: ${global.lockCopa}`);
-      watchdogSend(`Programa Anterior: ${global.progAnterior}`);
-    } else {
-      console.log(`PROG STATUS | Locutor:  ${resposta.locutor}, Programa: ${resposta.programa}`);
-      console.log(`BLOCK STATUS | BLOCK ALERTA: ${global.lock}, BLOCK MUNDIAL: ${global.lockCopa}`);
-      console.log(`Programa Anterior: ${global.progAnterior}`);
+    function statusDump() {
+      watchdogSend(`====================`);
+      watchdogSend(`Programa: ${resposta.programa}`);
+      watchdogSend(`Locutor: ${resposta.locutor}`);
+      watchdogSend(`BLOCK ALERTA: ${global.lock}`);
+      watchdogSend(`BLOCK Mundial: ${global.lockCopa}`);
+      watchdogSend(`BLOCK Universíadas: ${global.lockUni}`);
+      watchdogSend(`BLOCK Fukuoka: ${global.lockFuk}`);
+      watchdogSend(`====================`);
     }
-    if (resposta.programa != global.progAnterior && resposta.locutor == "Haruka Yuki") {
+
+    statusDump();
+
+    if (
+      resposta.programa != global.progAnterior &&
+      resposta.locutor == "Haruka Yuki"
+    ) {
       globalThis.progAnterior = resposta.programa;
     }
 
-    if (resposta.locutor != "Haruka Yuki" && resposta.programa != "Manutenção") {
-      if (config.discord.enabled) {
-        watchdogSend("Programa ao vivo detectado");
-        watchdogSend(`Programa: ${resposta.programa}`);
-        watchdogSend(`Locutor: ${resposta.locutor}`);
-        watchdogSend(`BLOCK ALERTA: ${global.lock}`);
-        watchdogSend(`BLOCK MUNDIAL: ${global.lockCopa}`);
-      } else {
-        console.log("Programa ao vivo detectado");
-        console.log(`Programa: ${resposta.programa}`);
-        console.log(`Locutor: ${resposta.locutor}`);
-        console.log(`BLOCK ALERTA: ${global.lock}`);
-        console.log(`BLOCK MUNDIAL: ${global.lockCopa}`);
-      }
+    if (
+      resposta.locutor != "Haruka Yuki" &&
+      resposta.programa != "Manutenção"
+    ) {
+      watchdogSend("Programa ao vivo detectado");
+      statusDump();
+
       progImg = resposta.social;
       progNoAr = resposta.programa;
 
       if (resposta.descricao.length > 0) {
         desc = resposta.descricao;
       } else {
-        desc = "Está a começar o " + resposta.programa + " com " + resposta.locutor;
+        desc =
+          "Está a começar o " + resposta.programa + " com " + resposta.locutor;
       }
 
+      let copaReg = /Mundial/gim;
+      let uniReg = /Universíadas/gim;
+      let fukReg = /Fukuoka/gim;
 
-      if ((!lockCopa && (global.progNoAr == "Mundial 2022" || global.progNoAr == "Mundial 2022 Brasil")) || !global.lock) {
-        console.log("A enviar alerta");
+      if (
+        (!global.lockCopa && copaReg.test(progNoAr)) ||
+        (!global.lockUni && uniReg.test(progNoAr)) ||
+        (!global.lockFuk && fukReg.test(progNoAr)) ||
+        (!global.lock &&
+          !uniReg.test(progNoAr) &&
+          !copaReg.test(progNoAr) &&
+          !fukReg.test(progNoAr))
+      ) {
+        watchdogSend("**A enviar alerta**");
+        fs.writeFileSync("foo.webp", await download(progImg));
 
         // Twitter
         if (config.twitter.enabled) {
-          fs.writeFileSync('foo.webp', await download(progImg));
-          const mediaId = await client.v1.uploadMedia('./foo.webp');
-          client.v2.tweet(desc + '\n Ouça em: https://www.animu.com.br/', { media: { media_ids: [mediaId] } }).then((val) => {
-            console.log(val);
-            console.log("success");
-          }).catch((err) => {
-            console.log(err);
-          });
+          const mediaId = await client.v1.uploadMedia("./foo.webp");
+          client.v2
+            .tweet(desc + "\n Ouça em: https://www.animu.com.br/", {
+              media: { media_ids: [mediaId] },
+            })
+            .then((val) => {
+              console.log(val);
+              console.log("success");
+            })
+            .catch((err) => {
+              console.log(err);
+            });
         }
 
         // Discord
@@ -115,70 +139,102 @@ async function checkSend() {
             .setColor(0x7de915)
             .setImage(progImg)
             .setDescription(desc)
-            .addFields(
-              { name: 'Ouça em:', value: 'https://www.animu.com.br/' },
-            );
-
+            .addFields({
+              name: "Ouça em:",
+              value: "https://www.animu.com.br/",
+            });
 
           webhookClient.send({
-            content: '@everyone Programa no ar na Animu!',
-            username: 'Alerta Animu!',
+            content: "@everyone Programa no ar na Animu!",
+            username: "Alerta Animu!",
             avatarURL: config.discord.avatarUrl,
             embeds: [embed],
           });
         }
 
+        //Bsky
+        if (config.bsky.enabled) {
+          const rt = new RichText({ text: desc + "\n Ouça em: animu.com.br" });
+          await agent.login({
+            identifier: config.bsky.accountEmail,
+            password: config.bsky.accountPassword,
+          });
+          const imageData = await fss.readFile("./foo.webp");
+          const imageUpload = await agent.uploadBlob(imageData, {
+            encoding: "image/png",
+          });
+
+          const postRecord = {
+            $type: "app.bsky.feed.post",
+            text: rt.text,
+            facets: rt.facets,
+            createdAt: new Date().toISOString(),
+            embed: {
+              $type: "app.bsky.embed.images",
+              images: [
+                {
+                  image: imageUpload.data.blob,
+                  alt: "",
+                },
+              ],
+            },
+          };
+          await agent.post(postRecord);
+        }
+
         global.lock = true;
-        globalThis.progAnterior = progNoAr;
+        global.progAnterior = resposta.programa;
+        let copaReg = /Mundial/gim;
+        let uniReg = /Universíadas/gim;
+        let fukReg = /Fukuoka/gim;
 
-
-        if (global.progNoAr == "Mundial 2022" || global.progNoAr == "Mundial 2022 Brasil") {
+        if (copaReg.test(resposta.programa)) {
           global.lockCopa = true;
-          global.progAnterior = global.progNoAr;
+          global.progAnterior = resposta.programa;
+        } else if (uniReg.test(resposta.programa)) {
+          global.lockUni = true;
+          global.progAnterior = resposta.programa;
+        } else if (fukReg.test(resposta.programa)) {
+          global.lockFuk = true;
+          global.progAnterior = resposta.programa;
         }
 
-      } else if ((global.progNoAr == "Mundial 2022" || global.progNoAr == "Mundial 2022 Brasil") && global.lockCopa) {
-        watchdogSend("prog.desportiva detectada e bloqueada, deixando blocks na mesma")
-      } else if (resposta.locutor != "Haruka Yuki" && resposta.programa != global.progAnterior) {
-        global.lock = false
-        if (config.discord.enabled) {
-          watchdogSend("Outro programa ao vivo a entrar no ar, a desligar o block.")
-          watchdogSend(`Programa Anterior: ${global.progAnterior}`)
-          watchdogSend(`Programa: ${resposta.programa}`)
-        } else {
-          console.log("Outro programa ao vivo a entrar no ar, a desligar o block.")
-          console.log(`Programa Anterior: ${global.progAnterior}`)
-          console.log(`Programa: ${resposta.programa}`)
-        }
+        watchdogSend("Programa ao vivo enviado");
+        statusDump();
+      } else if (
+        (copaReg.test(progNoAr) && global.lockCopa) ||
+        (uniReg.test(progNoAr) && global.lockUni) ||
+        (fukReg.test(global.progNoAr) && global.lockFuk)
+      ) {
+        watchdogSend(
+          "Programa desportivo detectado e bloqueado, deixando blocks na mesma"
+        );
+        statusDump();
+      } else if (
+        resposta.locutor != "Haruka Yuki" &&
+        resposta.programa != global.progAnterior
+      ) {
+        global.lock = false;
+        watchdogSend(
+          "Outro programa ao vivo a entrar no ar, a desligar o block."
+        );
+        statusDump();
       } else {
-        if (config.discord.enabled) {
-          watchdogSend("Haru no comando, deixando tudo na mesma.")
-          watchdogSend(`Programa: ${resposta.programa}`)
-          watchdogSend(`Locutor: ${resposta.locutor}`)
-          watchdogSend(`BLOCK ALERTA: ${global.lock}`)
-          watchdogSend(`BLOCK MUNDIAL: ${global.lockCopa}`)
-        } else {
-          console.log("Haru no comando, deixando tudo na mesma.")
-          console.log(`Programa: ${resposta.programa}`)
-          console.log(`Locutor: ${resposta.locutor}`)
-          console.log(`BLOCK ALERTA: ${global.lock}`)
-          console.log(`BLOCK MUNDIAL: ${global.lockCopa}`)
-        }
+        watchdogSend("Haru no comando, deixando tudo na mesma.");
+        statusDump();
       }
     }
-
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-
 }
 
 checkSend();
 
 setInterval(function () {
   try {
-    checkSend()
+    checkSend();
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-}, config.interval_minutes * 60000)
+}, config.interval_minutes * 60000);

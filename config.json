@@ -1,21 +1,27 @@
 {
     "endpoint_url" : "",
-    "interval_minutes": 1,
-    
+    "interval_minutes": 3,
     "discord": {
-    "enabled": false,
-    "webhookId": "",
-    "webhookToken": "",
-    "watchdogId": "",
-    "watchdogToken": "",
-    "avatarUrl": ""
-    },
+        "enabled": true,
+        "webhookId": "",
+        "webhookToken": "",
+        "watchdogId": "",
+        "watchdogToken": "",
+        "avatarUrl": ""
+        },
 
-    "twitter":{
-        "enabled" : false,
-        "appKey": "",
-        "appSecret": "",
-        "accessToken": "",
-        "accessSecret": ""
+        "twitter":{
+            "enabled" : true,
+            "appKey": "",
+            "appSecret": "",
+            "accessToken": "",
+            "accessSecret": ""
+        },
+    
+    "bsky": {
+         "enabled": true,
+         "accountEmail" : "",
+         "accountPassword": ""
     }
+
 }
