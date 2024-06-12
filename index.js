@@ -9,10 +9,12 @@ const download = require("download");
 import bluesky from "@atproto/api";
 const { BskyAgent, RichText } = bluesky;
 
-globalThis.lock = true;
-globalThis.lockCopa = true;
-globalThis.lockUni = true;
+globalThis.lock = false;
+globalThis.lockCopa = false;
+globalThis.lockUni = false;
 globalThis.lockFuk = false;
+globalThis.lockGang = false;
+globalThis.progAnterior = "";
 
 let progImg = "";
 let progNoAr = "";
@@ -68,10 +70,7 @@ async function checkSend() {
       watchdogSend(`Programa: ${resposta.programa}`);
       watchdogSend(`Locutor: ${resposta.locutor}`);
       watchdogSend(`BLOCK ALERTA: ${global.lock}`);
-      watchdogSend(`BLOCK Mundial: ${global.lockCopa}`);
-      watchdogSend(`BLOCK Universíadas: ${global.lockUni}`);
-      watchdogSend(`BLOCK Fukuoka: ${global.lockFuk}`);
-      watchdogSend(`====================`);
+      watchdogSend(`BLOCK Gang: ${global.lockGang}`);
     }
 
     statusDump();
@@ -103,18 +102,23 @@ async function checkSend() {
       let copaReg = /Mundial/gim;
       let uniReg = /Universíadas/gim;
       let fukReg = /Fukuoka/gim;
+      let gangReg = /Inverno/i;
 
       if (
         (!global.lockCopa && copaReg.test(progNoAr)) ||
         (!global.lockUni && uniReg.test(progNoAr)) ||
         (!global.lockFuk && fukReg.test(progNoAr)) ||
+        (!global.lockGang && gangReg.test(progNoAr)) ||
         (!global.lock &&
           !uniReg.test(progNoAr) &&
           !copaReg.test(progNoAr) &&
-          !fukReg.test(progNoAr))
+          !fukReg.test(progNoAr) &&
+          !gangReg.test(progNoAr))
       ) {
         watchdogSend("**A enviar alerta**");
         fs.writeFileSync("foo.webp", await download(progImg));
+        global.lock = true;
+        global.progAnterior = resposta.programa;
 
         // Twitter
         if (config.twitter.enabled) {
@@ -179,7 +183,11 @@ async function checkSend() {
               ],
             },
           };
+          try{
           await agent.post(postRecord);
+          } catch (error) {
+      console.log("There was an error", error);
+    }
         }
 
         global.lock = true;
@@ -187,16 +195,30 @@ async function checkSend() {
         let copaReg = /Mundial/gim;
         let uniReg = /Universíadas/gim;
         let fukReg = /Fukuoka/gim;
+        let gangReg = /Inverno/im;
 
         if (copaReg.test(resposta.programa)) {
           global.lockCopa = true;
           global.progAnterior = resposta.programa;
-        } else if (uniReg.test(resposta.programa)) {
+          global.lock = true;
+        }
+
+        if (uniReg.test(resposta.programa)) {
           global.lockUni = true;
           global.progAnterior = resposta.programa;
-        } else if (fukReg.test(resposta.programa)) {
+          global.lock = true;
+        }
+
+       if (fukReg.test(resposta.programa)) {
           global.lockFuk = true;
           global.progAnterior = resposta.programa;
+          global.lock = true;
+       }
+
+        if (gangReg.test(resposta.programa)){
+          global.lockGang = true;
+          global.progAnterior = resposta.programa;
+          global.lock = true;
         }
 
         watchdogSend("Programa ao vivo enviado");
@@ -204,7 +226,8 @@ async function checkSend() {
       } else if (
         (copaReg.test(progNoAr) && global.lockCopa) ||
         (uniReg.test(progNoAr) && global.lockUni) ||
-        (fukReg.test(global.progNoAr) && global.lockFuk)
+        (fukReg.test(progNoAr) && global.lockFuk) ||
+        (gangReg.test(progNoAr) && global.lockGang)
       ) {
         watchdogSend(
           "Programa desportivo detectado e bloqueado, deixando blocks na mesma"
