@@ -1,0 +1,13 @@
+
+services:
+  api:
+      build:
+        context: .
+        dockerfile: Dockerfile 
+      container_name: animu-alert
+      restart: unless-stopped
+      volumes:
+        - ./config.json:/api/config.json
+
+
+
